@@ -2,138 +2,60 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "vmConfigurations": {
+            "type": "array"
+        },
+        "location": {
+            "type": "string"
+        },
+        "networkSecurityGroupRules": {
+            "type": "array"
+        },
         "publicIPAddresses_LB_Ip_name": {
-            "defaultValue": "LB-Ip",
             "type": "String"
         },
         "loadBalancers_todoapp_LB_name": {
-            "defaultValue": "todoapp-LB",
-            "type": "String"
-        },
-        "publicIPAddresses_vpn_ip_name": {
-            "defaultValue": "vpn-ip",
-            "type": "String"
-        },
-        "virtualMachines_backend_vm_name": {
-            "defaultValue": "backend-vm",
-            "type": "String"
-        },
-        "virtualMachines_database_vm_name": {
-            "defaultValue": "database-vm",
-            "type": "String"
-        },
-        "virtualMachines_frontend_vm1_name": {
-            "defaultValue": "frontend-vm1",
-            "type": "String"
-        },
-        "virtualMachines_frontend_vm2_name": {
-            "defaultValue": "frontend-vm2",
             "type": "String"
         },
         "virtualNetworks_todoapp_vnet_name": {
-            "defaultValue": "todoapp-vnet",
-            "type": "String"
-        },
-        "networkInterfaces_backend_nic_name": {
-            "defaultValue": "backend-nic",
-            "type": "String"
-        },
-        "networkInterfaces_database_nic_name": {
-            "defaultValue": "database-nic",
-            "type": "String"
-        },
-        "networkInterfaces_frontend_nic1_name": {
-            "defaultValue": "frontend-nic1",
-            "type": "String"
-        },
-        "networkInterfaces_frontend_nic2_name": {
-            "defaultValue": "frontend-nic2",
-            "type": "String"
-        },
-        "networkSecurityGroups_backend_nsg_name": {
-            "defaultValue": "backend-nsg",
-            "type": "String"
-        },
-        "networkSecurityGroups_database_nsg_name": {
-            "defaultValue": "database-nsg",
             "type": "String"
         },
         "virtualNetworkGateways_todoapp_vpn_name": {
-            "defaultValue": "todoapp-vpn",
             "type": "String"
         },
-        "networkSecurityGroups_frontend_nsg1_name": {
-            "defaultValue": "frontend-nsg1",
-            "type": "String"
+        "osDiskType": {
+            "type": "string"
         },
-        "networkSecurityGroups_frontend_nsg2_name": {
-            "defaultValue": "frontend-nsg2",
-            "type": "String"
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "enablePeriodicAssessment": {
+            "type": "string"
         }
     },
-    "variables": {},
+
     "resources": [
         {
+            "name": "[parameters('vmConfigurations')[copyIndex()].nsg]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2024-07-01",
-            "name": "[parameters('networkSecurityGroups_backend_nsg_name')]",
-            "location": "centralindia",
+            "location": "[parameters('location')]",
             "properties": {
-                "securityRules": []
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkSecurityGroups_database_nsg_name')]",
-            "location": "centralindia",
-            "properties": {
-                "securityRules": []
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkSecurityGroups_frontend_nsg1_name')]",
-            "location": "centralindia",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "AllowAnyCustomAnyInbound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_frontend_nsg1_name'), 'AllowAnyCustomAnyInbound')]",
-                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
-                        "properties": {
-                            "protocol": "*",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound",
-                            "sourcePortRanges": [],
-                            "destinationPortRanges": [],
-                            "sourceAddressPrefixes": [],
-                            "destinationAddressPrefixes": []
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkSecurityGroups_frontend_nsg2_name')]",
-            "location": "centralindia",
-            "properties": {
-                "securityRules": []
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+            },
+            "copy": {
+                "name": "nsgLoop",
+                "count": "[length(parameters('vmConfigurations'))]"
             }
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2024-07-01",
             "name": "[parameters('publicIPAddresses_LB_Ip_name')]",
-            "location": "centralindia",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard",
                 "tier": "Regional"
@@ -150,27 +72,10 @@
             }
         },
         {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('publicIPAddresses_vpn_ip_name')]",
-            "location": "centralindia",
-            "sku": {
-                "name": "Standard",
-                "tier": "Regional"
-            },
-            "properties": {
-                "ipAddress": "52.172.182.192",
-                "publicIPAddressVersion": "IPv4",
-                "publicIPAllocationMethod": "Static",
-                "idleTimeoutInMinutes": 4,
-                "ipTags": []
-            }
-        },
-        {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2024-07-01",
-            "name": "[parameters('virtualNetworks_todoapp_vnet_name')]",
-            "location": "centralindia",
+            "name": "todoapp-vnet",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -221,19 +126,6 @@
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         },
                         "type": "Microsoft.Network/virtualNetworks/subnets"
-                    },
-                    {
-                        "name": "GatewaySubnet",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'GatewaySubnet')]",
-                        "properties": {
-                            "addressPrefixes": [
-                                "10.0.3.0/27"
-                            ],
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        },
-                        "type": "Microsoft.Network/virtualNetworks/subnets"
                     }
                 ],
                 "virtualNetworkPeerings": [],
@@ -241,307 +133,91 @@
             }
         },
         {
+            "name": "[parameters('vmConfigurations')[copyIndex()].vmName]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2024-11-01",
-            "name": "[parameters('virtualMachines_backend_vm_name')]",
-            "location": "centralindia",
+            "apiVersion": "2024-03-01",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_backend_nic_name'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmConfigurations')[copyIndex()].networkInterface)]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_B2ats_v2"
-                },
-                "additionalCapabilities": {
-                    "hibernationEnabled": false
+                    "vmSize": "[parameters('vmConfigurations')[copyIndex()].sku]"
                 },
                 "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        },
+                        "deleteOption": "Delete"
+                    },
                     "imageReference": {
                         "publisher": "canonical",
                         "offer": "ubuntu-24_04-lts",
                         "sku": "server",
                         "version": "latest"
-                    },
-                    "osDisk": {
-                        "osType": "Linux",
-                        "name": "[concat(parameters('virtualMachines_backend_vm_name'), '_disk1_7dcd7c0b27d04fb6a23a3e16d67ac006')]",
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite",
-                        "managedDisk": {
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_backend_vm_name'), '_disk1_7dcd7c0b27d04fb6a23a3e16d67ac006'))]"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "dataDisks": [],
-                    "diskControllerType": "SCSI"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('virtualMachines_backend_vm_name')]",
-                    "adminUsername": "vm-admin",
-                    "linuxConfiguration": {
-                        "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "path": "/home/vm-admin/.ssh/authorized_keys",
-                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmR9s2Q6Qo+EX6pvQax29fK3mLqVpXBq+xw4IPLPCrbq8IjERD3FIXhLFMvn9aU/j+N/+YUm0erZ9hRKA6RGAPD9dTL7BgCVYKRvgH2L5U7k70i82+5gf/4z7PHiuGQsvPrBoYpeHbAlD7KJXUfs1sw/gBR64wYNsEiICjRo+HzsvTq9n0Nzc9GdcTU/zxJ7asdJTvyQsAxywCexSxsrpe0hv/9+cAvboswYm6FYLvIuV7DE2Ls+AH5vVttB0fJyPyGiP6ASWJCRllM/XM4E0XSFNI8foAnyCB4+eevkIksPuPjmFGgrc58pLooQEsX8OaVx5YwVab3dZuGVWa0zl1 waleed@Waleed-PC"
-                                }
-                            ]
-                        },
-                        "provisionVMAgent": true,
-                        "patchSettings": {
-                            "patchMode": "ImageDefault",
-                            "assessmentMode": "ImageDefault"
-                        }
-                    },
-                    "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_backend_nic_name'))]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmConfigurations')[copyIndex()].networkInterface)]",
                             "properties": {
-                                "deleteOption": "Detach"
+                                "deleteOption": "Delete"
                             }
                         }
                     ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2024-11-01",
-            "name": "[parameters('virtualMachines_database_vm_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_database_nic_name'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_B2ats_v2"
                 },
+                "securityProfile": {},
                 "additionalCapabilities": {
                     "hibernationEnabled": false
                 },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "canonical",
-                        "offer": "ubuntu-24_04-lts",
-                        "sku": "server",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "osType": "Linux",
-                        "name": "[concat(parameters('virtualMachines_database_vm_name'), '_disk1_55e675091259428bb69f7ca38621730a')]",
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite",
-                        "managedDisk": {
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_database_vm_name'), '_disk1_55e675091259428bb69f7ca38621730a'))]"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "dataDisks": [],
-                    "diskControllerType": "SCSI"
-                },
                 "osProfile": {
-                    "computerName": "[parameters('virtualMachines_database_vm_name')]",
-                    "adminUsername": "vm-admin",
+                    "computerName": "[parameters('vmConfigurations')[copyIndex()].vmName]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
                     "linuxConfiguration": {
-                        "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "path": "/home/vm-admin/.ssh/authorized_keys",
-                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmR9s2Q6Qo+EX6pvQax29fK3mLqVpXBq+xw4IPLPCrbq8IjERD3FIXhLFMvn9aU/j+N/+YUm0erZ9hRKA6RGAPD9dTL7BgCVYKRvgH2L5U7k70i82+5gf/4z7PHiuGQsvPrBoYpeHbAlD7KJXUfs1sw/gBR64wYNsEiICjRo+HzsvTq9n0Nzc9GdcTU/zxJ7asdJTvyQsAxywCexSxsrpe0hv/9+cAvboswYm6FYLvIuV7DE2Ls+AH5vVttB0fJyPyGiP6ASWJCRllM/XM4E0XSFNI8foAnyCB4+eevkIksPuPjmFGgrc58pLooQEsX8OaVx5YwVab3dZuGVWa0zl1 waleed@Waleed-PC"
-                                }
-                            ]
-                        },
-                        "provisionVMAgent": true,
+                        "disablePasswordAuthentication": false,
                         "patchSettings": {
-                            "patchMode": "ImageDefault",
-                            "assessmentMode": "ImageDefault"
+                            "assessmentMode": "[parameters('enablePeriodicAssessment')]",
+                            "patchMode": "ImageDefault"
                         }
-                    },
-                    "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_database_nic_name'))]",
-                            "properties": {
-                                "deleteOption": "Detach"
-                            }
-                        }
-                    ]
+                    }
+                }
+            },
+            "copy": {
+                "name": "vmLoop",
+                "count": "[length(parameters('vmConfigurations'))]"
+            }
+        },
+
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2022-11-01",
+            "name": "[format('{0}/customScript', parameters('vmConfigurations')[copyIndex()].name)]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmConfigurations')[copyIndex()].name)]"
+            ],
+            "copy": {
+                "name": "customScriptLoop",
+                "count": "[length(parameters('vmConfigurations'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[parameters('vmConfigurations')[copyIndex()].scriptPath]"
+                    ],
+                    "commandToExecute": "[format('bash {0}', last(split(parameters('vmConfigurations')[copyIndex()].scriptPath, '/')))]"
                 }
             }
         },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2024-11-01",
-            "name": "[parameters('virtualMachines_frontend_vm1_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic1_name'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_B1s"
-                },
-                "additionalCapabilities": {
-                    "hibernationEnabled": false
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "canonical",
-                        "offer": "ubuntu-24_04-lts",
-                        "sku": "server",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "osType": "Linux",
-                        "name": "[concat(parameters('virtualMachines_frontend_vm1_name'), '_disk1_ff93b3f6b2fc4b99baebe60d93b0fe3d')]",
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite",
-                        "managedDisk": {
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_frontend_vm1_name'), '_disk1_ff93b3f6b2fc4b99baebe60d93b0fe3d'))]"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "dataDisks": [],
-                    "diskControllerType": "SCSI"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('virtualMachines_frontend_vm1_name')]",
-                    "adminUsername": "vm-admin",
-                    "linuxConfiguration": {
-                        "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "path": "/home/vm-admin/.ssh/authorized_keys",
-                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmR9s2Q6Qo+EX6pvQax29fK3mLqVpXBq+xw4IPLPCrbq8IjERD3FIXhLFMvn9aU/j+N/+YUm0erZ9hRKA6RGAPD9dTL7BgCVYKRvgH2L5U7k70i82+5gf/4z7PHiuGQsvPrBoYpeHbAlD7KJXUfs1sw/gBR64wYNsEiICjRo+HzsvTq9n0Nzc9GdcTU/zxJ7asdJTvyQsAxywCexSxsrpe0hv/9+cAvboswYm6FYLvIuV7DE2Ls+AH5vVttB0fJyPyGiP6ASWJCRllM/XM4E0XSFNI8foAnyCB4+eevkIksPuPjmFGgrc58pLooQEsX8OaVx5YwVab3dZuGVWa0zl1 waleed@Waleed-PC"
-                                }
-                            ]
-                        },
-                        "provisionVMAgent": true,
-                        "patchSettings": {
-                            "patchMode": "ImageDefault",
-                            "assessmentMode": "ImageDefault"
-                        }
-                    },
-                    "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic1_name'))]",
-                            "properties": {
-                                "deleteOption": "Detach"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2024-11-01",
-            "name": "[parameters('virtualMachines_frontend_vm2_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic2_name'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_B1s"
-                },
-                "additionalCapabilities": {
-                    "hibernationEnabled": false
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "canonical",
-                        "offer": "ubuntu-24_04-lts",
-                        "sku": "server",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "osType": "Linux",
-                        "name": "[concat(parameters('virtualMachines_frontend_vm2_name'), '_OsDisk_1_a8da17baed9546c49383a74d6e1a8fef')]",
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite",
-                        "managedDisk": {
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_frontend_vm2_name'), '_OsDisk_1_a8da17baed9546c49383a74d6e1a8fef'))]"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "dataDisks": [],
-                    "diskControllerType": "SCSI"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('virtualMachines_frontend_vm2_name')]",
-                    "adminUsername": "vm-admin",
-                    "linuxConfiguration": {
-                        "disablePasswordAuthentication": true,
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "path": "/home/vm-admin/.ssh/authorized_keys",
-                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmR9s2Q6Qo+EX6pvQax29fK3mLqVpXBq+xw4IPLPCrbq8IjERD3FIXhLFMvn9aU/j+N/+YUm0erZ9hRKA6RGAPD9dTL7BgCVYKRvgH2L5U7k70i82+5gf/4z7PHiuGQsvPrBoYpeHbAlD7KJXUfs1sw/gBR64wYNsEiICjRo+HzsvTq9n0Nzc9GdcTU/zxJ7asdJTvyQsAxywCexSxsrpe0hv/9+cAvboswYm6FYLvIuV7DE2Ls+AH5vVttB0fJyPyGiP6ASWJCRllM/XM4E0XSFNI8foAnyCB4+eevkIksPuPjmFGgrc58pLooQEsX8OaVx5YwVab3dZuGVWa0zl1 waleed@Waleed-PC"
-                                }
-                            ]
-                        },
-                        "provisionVMAgent": true,
-                        "patchSettings": {
-                            "patchMode": "ImageDefault",
-                            "assessmentMode": "ImageDefault"
-                        }
-                    },
-                    "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic2_name'))]",
-                            "properties": {
-                                "deleteOption": "Detach"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
-            "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('networkSecurityGroups_frontend_nsg1_name'), '/AllowAnyCustomAnyInbound')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_frontend_nsg1_name'))]"
-            ],
-            "properties": {
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 100,
-                "direction": "Inbound",
-                "sourcePortRanges": [],
-                "destinationPortRanges": [],
-                "sourceAddressPrefixes": [],
-                "destinationAddressPrefixes": []
-            }
-        },
+
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2024-07-01",
@@ -610,7 +286,7 @@
             "type": "Microsoft.Network/loadBalancers",
             "apiVersion": "2024-07-01",
             "name": "[parameters('loadBalancers_todoapp_LB_name')]",
-            "location": "centralindia",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_LB_Ip_name'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
@@ -634,7 +310,7 @@
                 ],
                 "backendAddressPools": [
                     {
-                        "name": "frontend-vms-pool",
+                        "name": "backend-vms-pool",
                         "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_todoapp_LB_name'), 'frontend-vms-pool')]",
                         "properties": {
                             "loadBalancerBackendAddresses": [
@@ -713,7 +389,7 @@
         {
             "type": "Microsoft.Network/loadBalancers/backendAddressPools",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('loadBalancers_todoapp_LB_name'), '/frontend-vms-pool')]",
+            "name": "[concat(parameters('loadBalancers_todoapp_LB_name'), '/backend-vms-pool')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
@@ -742,255 +418,33 @@
             }
         },
         {
+            "name": "[parameters('vmConfigurations')[copyIndex()].networkInterface]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkInterfaces_backend_nic_name')]",
-            "location": "centralindia",
+            "apiVersion": "2022-11-01",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'backend')]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_backend_nsg_name'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vmConfigurations')[copyIndex()].nsg)]"
             ],
-            "kind": "Regular",
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
-                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_backend_nic_name')), '/ipConfigurations/ipconfig1')]",
-                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
                         "properties": {
-                            "privateIPAddress": "10.0.1.4",
-                            "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'backend')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'todoapp-vnet', parameters('vmConfigurations')[copyIndex()].subnet)]"
                             },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
+                            "privateIPAllocationMethod": "Dynamic"
                         }
                     }
                 ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
                 "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false,
-                "disableTcpStateTracking": false,
                 "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_backend_nsg_name'))]"
-                },
-                "nicType": "Standard",
-                "auxiliaryMode": "None",
-                "auxiliarySku": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkInterfaces_database_nic_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'database')]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_database_nsg_name'))]"
-            ],
-            "kind": "Regular",
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_database_nic_name')), '/ipConfigurations/ipconfig1')]",
-                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
-                        "properties": {
-                            "privateIPAddress": "10.0.2.4",
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'database')]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false,
-                "disableTcpStateTracking": false,
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_database_nsg_name'))]"
-                },
-                "nicType": "Standard",
-                "auxiliaryMode": "None",
-                "auxiliarySku": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkInterfaces_frontend_nic1_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'frontend')]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_frontend_nsg1_name'))]"
-            ],
-            "kind": "Regular",
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic1_name')), '/ipConfigurations/ipconfig1')]",
-                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
-                        "properties": {
-                            "privateIPAddress": "10.0.0.5",
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'frontend')]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false,
-                "disableTcpStateTracking": false,
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_frontend_nsg1_name'))]"
-                },
-                "nicType": "Standard",
-                "auxiliaryMode": "None",
-                "auxiliarySku": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('networkInterfaces_frontend_nic2_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'frontend')]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_frontend_nsg2_name'))]"
-            ],
-            "kind": "Regular",
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_frontend_nic2_name')), '/ipConfigurations/ipconfig1')]",
-                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
-                        "properties": {
-                            "privateIPAddress": "10.0.0.4",
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'frontend')]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false,
-                "disableTcpStateTracking": false,
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_frontend_nsg2_name'))]"
-                },
-                "nicType": "Standard",
-                "auxiliaryMode": "None",
-                "auxiliarySku": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworkGateways",
-            "apiVersion": "2024-07-01",
-            "name": "[parameters('virtualNetworkGateways_todoapp_vpn_name')]",
-            "location": "centralindia",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_vpn_ip_name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'GatewaySubnet')]"
-            ],
-            "properties": {
-                "enablePrivateIpAddress": false,
-                "virtualNetworkGatewayMigrationStatus": {
-                    "state": "None",
-                    "phase": "None"
-                },
-                "ipConfigurations": [
-                    {
-                        "name": "default",
-                        "id": "[concat(resourceId('Microsoft.Network/virtualNetworkGateways', parameters('virtualNetworkGateways_todoapp_vpn_name')), '/ipConfigurations/default')]",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_vpn_ip_name'))]"
-                            },
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'GatewaySubnet')]"
-                            }
-                        }
-                    }
-                ],
-                "natRules": [],
-                "virtualNetworkGatewayPolicyGroups": [],
-                "enableBgpRouteTranslationForNat": false,
-                "disableIPSecReplayProtection": false,
-                "sku": {
-                    "name": "VpnGw1",
-                    "tier": "VpnGw1"
-                },
-                "gatewayType": "Vpn",
-                "vpnType": "RouteBased",
-                "enableBgp": false,
-                "enableHighBandwidthVpnGateway": false,
-                "activeActive": false,
-                "vpnClientConfiguration": {
-                    "vpnClientAddressPool": {
-                        "addressPrefixes": [
-                            "172.1.201.0/24"
-                        ]
-                    },
-                    "vpnClientProtocols": [
-                        "OpenVPN"
-                    ],
-                    "vpnAuthenticationTypes": [
-                        "Certificate"
-                    ],
-                    "vpnClientRootCertificates": [
-                        {
-                            "name": "rootcert",
-                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworkGateways', parameters('virtualNetworkGateways_todoapp_vpn_name')), '/vpnClientRootCertificates/rootcert')]",
-                            "properties": {
-                                "publicCertData": "MIIC4TCCAcmgAwIBAgIQV7/ZZbCuXKlFVBbyK8IwCDANBgkqhkiG9w0BAQsFADAT MREwDwYDVQQDDAhSb290Q2VydDAeFw0yNTA4MDcxMDM2MDNaFw0yNjA4MDcxMDU2 MDNaMBMxETAPBgNVBAMMCFJvb3RDZXJ0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A MIIBCgKCAQEAmMlIMpLF6smWqex9mJPQv28aixlvvXQ+7A1t3S8Xrap70jFr2e3a KDoxiMe5Tdq6JCB+eP3deV9fqxtP8e/mlROV8/nacZdkSyIhpmWnm26y5HPk+Wjd kr1Js5ON8s5iX0nYdev6q8ieX2HBVIZpXSB4fssnEChTgKnDFgYAMMVfROQ+yzca gSmycmqDdbFLQAWTbtIjlOTSmDk+blgq76AMZcCtiWgz0/jx0tHaObSeAX5X3uLh Av892LFUIQH+JzZ15I2hCU/ZkjYvh9E1Ajeym3fZBEnvbCME+cRBLFCqcArrLgMu c5P3qCelcRkxuAma8i38+0F2ZWh/9Ev0OQIDAQABozEwLzAOBgNVHQ8BAf8EBAMC AgQwHQYDVR0OBBYEFDO1gTRrLZr+EZ8RRjWOQ2LFGWSwMA0GCSqGSIb3DQEBCwUA A4IBAQBP6bgYoslW7lDo/tqdpLHxi2t524Fkn7fDoYYfrQjjDi8c0g8aLu6OqGwk NAZTQI16FtCzxulSohyBGNHkzzP1zPFBPcrJhssbApgKVImyU36A/SFbco2/DfK9 vfFiAu0LP+ogqohveW16j8BhZTheX8EuJcfEcWpW3I/v6eSeAhY/PWFSTFL4zY8p C3xaDhQi1mp6Vq+aUTkDwUceTEgoqOsqfuRvjDFhF2pMyUFJZ5nWQZGfiIQlkqCc uu9608N/78OLaws2Ja/q8VfIXrOnOHoTOWIk6TCAazcbJjJfZPXCXE1E+bjGqzA2 6iWVi9JGCuPsCQFe3dg3PFSh51WX"
-                            }
-                        }
-                    ],
-                    "vpnClientRevokedCertificates": [],
-                    "vngClientConnectionConfigurations": [],
-                    "radiusServers": [],
-                    "vpnClientIpsecPolicies": []
-                },
-                "bgpSettings": {
-                    "asn": 65515,
-                    "bgpPeeringAddress": "10.0.3.30",
-                    "peerWeight": 0,
-                    "bgpPeeringAddresses": [
-                        {
-                            "ipconfigurationId": "[concat(resourceId('Microsoft.Network/virtualNetworkGateways', parameters('virtualNetworkGateways_todoapp_vpn_name')), '/ipConfigurations/default')]",
-                            "customBgpIpAddresses": []
-                        }
-                    ]
-                },
-                "customRoutes": {
-                    "addressPrefixes": []
-                },
-                "vpnGatewayGeneration": "Generation1",
-                "allowRemoteVnetTraffic": false,
-                "allowVirtualWanTraffic": false
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vmConfigurations')[copyIndex()].nsg)]"
+                }
+            },
+            "copy": {
+                "name": "networkInterfaceLoop",
+                "count": "[length(parameters('vmConfigurations'))]"
             }
         }
     ]

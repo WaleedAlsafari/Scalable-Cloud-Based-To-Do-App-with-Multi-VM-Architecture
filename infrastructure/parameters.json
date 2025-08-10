@@ -2,56 +2,72 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "vmConfigurations": {
+            "type": "array",
+            "value": [
+                {
+                    "vmName": "frontend-vm1",
+                    "sku": "Standard_B1s",
+                    "networkInterface": "frontend-nic1",
+                    "subnet": "frontend",
+                    "nsg": "frontend-nsg1",
+                    "scriptPath": "path"
+                },
+                {
+                    "vmName": "frontend-vm2",
+                    "sku": "Standard_B1s",
+                    "networkInterface": "frontend-nic2",
+                    "subnet": "frontend",
+                    "nsg": "frontend-nsg2",
+                    "scriptPath": "path"
+                },
+                {
+                    "vmName": "backend-vm",
+                    "sku": "Standard_B2ats_v2",
+                    "networkInterface": "backend-nic",
+                    "subnet": "backend",
+                    "nsg": "backend-nsg",
+                    "scriptPath": "path"
+                },
+                {
+                    "vmName": "database-vm",
+                    "sku": "Standard_B2ats_v2",
+                    "networkInterface": "database-nic",
+                    "subnet": "database",
+                    "nsg": "database-nsg",
+                    "scriptPath": "path"
+                }
+            ]
+        },
+        "location": {
+            "defaultValue": "centralindia"
+        },
         "publicIPAddresses_LB_Ip_name": {
-            "value": null
+            "defaultValue": "LB-Ip"
         },
         "loadBalancers_todoapp_LB_name": {
-            "value": null
+            "defaultValue": "todoapp-LB"
         },
         "publicIPAddresses_vpn_ip_name": {
-            "value": null
-        },
-        "virtualMachines_backend_vm_name": {
-            "value": null
-        },
-        "virtualMachines_database_vm_name": {
-            "value": null
-        },
-        "virtualMachines_frontend_vm1_name": {
-            "value": null
-        },
-        "virtualMachines_frontend_vm2_name": {
-            "value": null
+            "defaultValue": "vpn-ip"
         },
         "virtualNetworks_todoapp_vnet_name": {
-            "value": null
-        },
-        "networkInterfaces_backend_nic_name": {
-            "value": null
-        },
-        "networkInterfaces_database_nic_name": {
-            "value": null
-        },
-        "networkInterfaces_frontend_nic1_name": {
-            "value": null
-        },
-        "networkInterfaces_frontend_nic2_name": {
-            "value": null
-        },
-        "networkSecurityGroups_backend_nsg_name": {
-            "value": null
-        },
-        "networkSecurityGroups_database_nsg_name": {
-            "value": null
+            "defaultValue": "todoapp-vnet"
         },
         "virtualNetworkGateways_todoapp_vpn_name": {
-            "value": null
+            "defaultValue": "todoapp-vpn"
         },
-        "networkSecurityGroups_frontend_nsg1_name": {
-            "value": null
+        "osDiskType": {
+            "value": "StandardSSD_LRS"
         },
-        "networkSecurityGroups_frontend_nsg2_name": {
-            "value": null
+        "adminUsername": {
+            "value": "vm-admin"
+        },
+        "adminPassword": {
+            "minLength": 8
+        },
+        "enablePeriodicAssessment": {
+            "value": "ImageDefault"
         }
     }
 }
