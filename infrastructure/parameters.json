@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publicIPAddresses_LB_Ip_name": {
+            "value": null
+        },
+        "loadBalancers_todoapp_LB_name": {
+            "value": null
+        },
+        "publicIPAddresses_vpn_ip_name": {
+            "value": null
+        },
+        "virtualMachines_backend_vm_name": {
+            "value": null
+        },
+        "virtualMachines_database_vm_name": {
+            "value": null
+        },
+        "virtualMachines_frontend_vm1_name": {
+            "value": null
+        },
+        "virtualMachines_frontend_vm2_name": {
+            "value": null
+        },
+        "virtualNetworks_todoapp_vnet_name": {
+            "value": null
+        },
+        "networkInterfaces_backend_nic_name": {
+            "value": null
+        },
+        "networkInterfaces_database_nic_name": {
+            "value": null
+        },
+        "networkInterfaces_frontend_nic1_name": {
+            "value": null
+        },
+        "networkInterfaces_frontend_nic2_name": {
+            "value": null
+        },
+        "networkSecurityGroups_backend_nsg_name": {
+            "value": null
+        },
+        "networkSecurityGroups_database_nsg_name": {
+            "value": null
+        },
+        "virtualNetworkGateways_todoapp_vpn_name": {
+            "value": null
+        },
+        "networkSecurityGroups_frontend_nsg1_name": {
+            "value": null
+        },
+        "networkSecurityGroups_frontend_nsg2_name": {
+            "value": null
+        }
+    }
+}
