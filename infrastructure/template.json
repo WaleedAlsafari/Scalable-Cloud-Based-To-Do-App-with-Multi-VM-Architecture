@@ -184,10 +184,10 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2022-11-01",
-            "name": "[format('{0}/customScript', parameters('vmConfigurations')[copyIndex()].name)]",
+            "name": "[format('{0}/customScript', parameters('vmConfigurations')[copyIndex()].vmName)]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmConfigurations')[copyIndex()].name)]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmConfigurations')[copyIndex()].vmName)]"
             ],
             "copy": {
                 "name": "customScriptLoop",
