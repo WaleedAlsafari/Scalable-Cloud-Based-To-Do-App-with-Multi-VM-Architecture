@@ -11,7 +11,7 @@
                     "networkInterface": "frontend-nic1",
                     "subnet": "frontend",
                     "nsg": "frontend-nsg1",
-                    "scriptPath": "path"
+                    "scriptPath": "https://raw.githubusercontent.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/refs/heads/main/scripts/frontendScripts.sh"
                 },
                 {
                     "vmName": "frontend-vm2",
@@ -19,7 +19,7 @@
                     "networkInterface": "frontend-nic2",
                     "subnet": "frontend",
                     "nsg": "frontend-nsg2",
-                    "scriptPath": "path"
+                    "scriptPath": "https://raw.githubusercontent.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/refs/heads/main/scripts/frontendScripts.sh"
                 },
                 {
                     "vmName": "backend-vm",
@@ -27,7 +27,7 @@
                     "networkInterface": "backend-nic",
                     "subnet": "backend",
                     "nsg": "backend-nsg",
-                    "scriptPath": "path"
+                    "scriptPath": "https://raw.githubusercontent.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/refs/heads/main/scripts/backendScripts.sh"
                 },
                 {
                     "vmName": "database-vm",
@@ -35,7 +35,7 @@
                     "networkInterface": "database-nic",
                     "subnet": "database",
                     "nsg": "database-nsg",
-                    "scriptPath": "path"
+                    "scriptPath": "https://raw.githubusercontent.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/refs/heads/main/scripts/databaseScripts.sh"
                 }
             ]
         },

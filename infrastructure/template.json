@@ -20,9 +20,6 @@
         "virtualNetworks_todoapp_vnet_name": {
             "type": "String"
         },
-        "virtualNetworkGateways_todoapp_vpn_name": {
-            "type": "String"
-        },
         "osDiskType": {
             "type": "string"
         },
