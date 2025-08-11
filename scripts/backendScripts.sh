@@ -1,27 +1,25 @@
-
-set -e
+#!/bin/bash
 
 
 sudo apt update && sudo apt upgrade -y
 
 
-sudo apt install -y nodejs npm git curl
+sudo apt install -y curl git
 
 
-git clone https://github.com/vickytilotia/PERN-ToDo-App.git
+sudo apt install -y nodejs npm
 
 
+if ! command -v node &> /dev/null; then
+    sudo ln -s /usr/bin/nodejs /usr/bin/node
+fi
+
+
+node -v
+npm -v
+
+git clone https://github.com/WaleedAlsafari/PERN-ToDo-App.git
 cd PERN-ToDo-App/server
 
-
-cat <<EOF > .env
-DB_HOST=10.0.2.4
-DB_PORT=5432
-DB_USER=admin
-DB_PASSWORD=Admin123@
-DB_NAME=todoapp
-EOF
-
-
 npm install
-npm run server
+npm run build
