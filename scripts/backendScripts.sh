@@ -1,33 +1,18 @@
-#!/bin/bash
-
-# Exit on any error
-set -e
-
-# Update and upgrade packages
 sudo apt update && sudo apt upgrade -y
 
-# Install curl and git (required for cloning and NodeSource setup)
-sudo apt install -y curl git
+sudo apt install -y nodejs git curl
 
-# Set up NodeSource repository for Node.js v20 (LTS)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+git clone https://github.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture.git
 
-# Install Node.js (includes npm automatically)
-sudo apt install -y nodejs
+cd Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture\app\server
 
-# Refresh environment to ensure PATH includes node and npm
-source /etc/profile || true
+cat <<EOF > .env
+DB_HOST=10.0.2.4
+DB_PORT=5432
+DB_USER=admin
+DB_PASSWORD=Admin123@
+DB_NAME=todoapp
+EOF
 
-# Verify installations (fail if not found)
-node -v || { echo "Node.js not found"; exit 1; }
-npm -v || { echo "npm not found"; exit 1; }
-
-# Clone the repository and set up the backend
-git clone https://github.com/WaleedAlsafari/PERN-ToDo-App.git
-cd PERN-ToDo-App/server
-
-# Run npm commands
 npm install
-npm run build
-
-echo "Setup complete!"
+npm run server
