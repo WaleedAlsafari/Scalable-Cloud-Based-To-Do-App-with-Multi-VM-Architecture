@@ -8,16 +8,7 @@
         "location": {
             "type": "string"
         },
-        "networkSecurityGroupRules": {
-            "type": "array"
-        },
-        "publicIPAddresses_LB_Ip_name": {
-            "type": "String"
-        },
-        "loadBalancers_todoapp_LB_name": {
-            "type": "String"
-        },
-        "virtualNetworks_todoapp_vnet_name": {
+        "virtualNetworkName": {
             "type": "String"
         },
         "osDiskType": {
@@ -28,9 +19,6 @@
         },
         "adminPassword": {
             "type": "secureString"
-        },
-        "enablePeriodicAssessment": {
-            "type": "string"
         }
     },
 
@@ -41,7 +29,9 @@
             "apiVersion": "2024-07-01",
             "location": "[parameters('location')]",
             "properties": {
-                "securityRules": "[parameters('networkSecurityGroupRules')]"
+                "securityRules": [
+
+                ]
             },
             "copy": {
                 "name": "nsgLoop",
@@ -51,7 +41,7 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2024-07-01",
-            "name": "[parameters('publicIPAddresses_LB_Ip_name')]",
+            "name": "LoadB-ip",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard",
@@ -87,7 +77,7 @@
                 "subnets": [
                     {
                         "name": "frontend",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'frontend')]",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'frontend')]",
                         "properties": {
                             "addressPrefixes": [
                                 "10.0.0.0/24"
@@ -100,7 +90,7 @@
                     },
                     {
                         "name": "backend",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'backend')]",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'backend')]",
                         "properties": {
                             "addressPrefixes": [
                                 "10.0.1.0/24"
@@ -113,7 +103,7 @@
                     },
                     {
                         "name": "database",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_todoapp_vnet_name'), 'database')]",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'database')]",
                         "properties": {
                             "addressPrefixes": [
                                 "10.0.2.0/24"
@@ -177,7 +167,7 @@
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": false,
                         "patchSettings": {
-                            "assessmentMode": "[parameters('enablePeriodicAssessment')]",
+                            "assessmentMode": "ImageDefault",
                             "patchMode": "ImageDefault"
                         }
                     }
@@ -218,9 +208,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('virtualNetworks_todoapp_vnet_name'), '/backend')]",
+            "name": "[concat(parameters('virtualNetworkName'), '/backend')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "properties": {
                 "addressPrefixes": [
@@ -234,9 +224,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('virtualNetworks_todoapp_vnet_name'), '/database')]",
+            "name": "[concat(parameters('virtualNetworkName'), '/database')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "properties": {
                 "addressPrefixes": [
@@ -250,9 +240,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('virtualNetworks_todoapp_vnet_name'), '/frontend')]",
+            "name": "[concat(parameters('virtualNetworkName'), '/frontend')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "properties": {
                 "addressPrefixes": [
@@ -266,9 +256,9 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('virtualNetworks_todoapp_vnet_name'), '/GatewaySubnet')]",
+            "name": "[concat(parameters('virtualNetworkName'), '/GatewaySubnet')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "properties": {
                 "addressPrefixes": [
@@ -282,11 +272,11 @@
         {
             "type": "Microsoft.Network/loadBalancers",
             "apiVersion": "2024-07-01",
-            "name": "[parameters('loadBalancers_todoapp_LB_name')]",
+            "name": "todoapp-LB",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_LB_Ip_name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'LoadB-ip')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "sku": {
                 "name": "Standard",
@@ -296,11 +286,11 @@
                 "frontendIPConfigurations": [
                     {
                         "name": "frontendIp-LB",
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name')), '/frontendIPConfigurations/frontendIp-LB')]",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'todoapp-LB'), '/frontendIPConfigurations/frontendIp-LB')]",
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_LB_Ip_name'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'LoadB-ip')]"
                             }
                         }
                     }
@@ -308,7 +298,7 @@
                 "backendAddressPools": [
                     {
                         "name": "backend-vms-pool",
-                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_todoapp_LB_name'), 'frontend-vms-pool')]",
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools','todoapp-LB', 'backend-vms-pool')]",
                         "properties": {
                             "loadBalancerBackendAddresses": [
                                 {
@@ -316,7 +306,7 @@
                                     "properties": {
                                         "ipAddress": "10.0.0.4",
                                         "virtualNetwork": {
-                                            "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
                                         }
                                     }
                                 },
@@ -325,7 +315,7 @@
                                     "properties": {
                                         "ipAddress": "10.0.0.5",
                                         "virtualNetwork": {
-                                            "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
                                         }
                                     }
                                 }
@@ -336,10 +326,10 @@
                 "loadBalancingRules": [
                     {
                         "name": "rule1",
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name')), '/loadBalancingRules/rule1')]",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'todoapp-LB'), '/loadBalancingRules/rule1')]",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name')), '/frontendIPConfigurations/frontendIp-LB')]"
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'todoapp-LB'), '/frontendIPConfigurations/frontendIp-LB')]"
                             },
                             "frontendPort": 80,
                             "backendPort": 3000,
@@ -351,15 +341,15 @@
                             "disableOutboundSnat": true,
                             "enableConnectionTracking": false,
                             "backendAddressPool": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_todoapp_LB_name'), 'frontend-vms-pool')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools','todoapp-LB', 'backend-vms-pool')]"
                             },
                             "backendAddressPools": [
                                 {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_todoapp_LB_name'), 'frontend-vms-pool')]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'todoapp-LB', 'backend-vms-pool')]"
                                 }
                             ],
                             "probe": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name')), '/probes/hprobe')]"
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'todoapp-LB'), '/probes/hprobe')]"
                             }
                         }
                     }
@@ -367,7 +357,7 @@
                 "probes": [
                     {
                         "name": "hprobe",
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name')), '/probes/hprobe')]",
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers','todoapp-LB'), '/probes/hprobe')]",
                         "properties": {
                             "protocol": "Tcp",
                             "port": 3000,
@@ -386,10 +376,10 @@
         {
             "type": "Microsoft.Network/loadBalancers/backendAddressPools",
             "apiVersion": "2024-07-01",
-            "name": "[concat(parameters('loadBalancers_todoapp_LB_name'), '/backend-vms-pool')]",
+            "name": "[concat('todoapp-LB', '/backend-vms-pool')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_todoapp_LB_name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                "[resourceId('Microsoft.Network/loadBalancers', 'todoapp-LB')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
             ],
             "properties": {
                 "loadBalancerBackendAddresses": [
@@ -398,7 +388,7 @@
                         "properties": {
                             "ipAddress": "10.0.0.4",
                             "virtualNetwork": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
                             }
                         }
                     },
@@ -407,7 +397,7 @@
                         "properties": {
                             "ipAddress": "10.0.0.5",
                             "virtualNetwork": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_todoapp_vnet_name'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
                             }
                         }
                     }

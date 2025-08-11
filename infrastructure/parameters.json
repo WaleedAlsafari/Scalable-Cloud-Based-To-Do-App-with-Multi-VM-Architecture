@@ -38,24 +38,10 @@
                     "scriptPath": "https://raw.githubusercontent.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/refs/heads/main/scripts/databaseScripts.sh"
                 }
             ]
-        },
-        "location": {
-            "defaultValue": "centralindia"
-        },
-        "publicIPAddresses_LB_Ip_name": {
-            "defaultValue": "LB-Ip"
-        },
-        "loadBalancers_todoapp_LB_name": {
-            "defaultValue": "todoapp-LB"
-        },
-        "publicIPAddresses_vpn_ip_name": {
-            "defaultValue": "vpn-ip"
-        },
-        "virtualNetworks_todoapp_vnet_name": {
+        }, 
+
+        "virtualNetworkName": {
             "defaultValue": "todoapp-vnet"
-        },
-        "virtualNetworkGateways_todoapp_vpn_name": {
-            "defaultValue": "todoapp-vpn"
         },
         "osDiskType": {
             "value": "StandardSSD_LRS"
