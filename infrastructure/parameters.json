@@ -3,7 +3,6 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vmConfigurations": {
-            "type": "array",
             "value": [
                 {
                     "vmName": "frontend-vm1",
@@ -39,21 +38,12 @@
                 }
             ]
         }, 
-
-        "virtualNetworkName": {
-            "defaultValue": "todoapp-vnet"
-        },
         "osDiskType": {
             "value": "StandardSSD_LRS"
         },
         "adminUsername": {
             "value": "vm-admin"
-        },
-        "adminPassword": {
-            "minLength": 8
-        },
-        "enablePeriodicAssessment": {
-            "value": "ImageDefault"
         }
+
     }
 }
