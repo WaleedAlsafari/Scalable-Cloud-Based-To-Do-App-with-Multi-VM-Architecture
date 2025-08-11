@@ -22,4 +22,4 @@ git clone https://github.com/WaleedAlsafari/PERN-ToDo-App.git
 cd PERN-ToDo-App/server
 
 npm install
-npm run build
+npm run server
