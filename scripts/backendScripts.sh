@@ -6,26 +6,28 @@ set -e
 # Update and upgrade packages
 sudo apt update && sudo apt upgrade -y
 
-# Install curl, git, nodejs, and npm
-sudo apt install -y curl git nodejs npm
+# Install curl and git (required for cloning and NodeSource setup)
+sudo apt install -y curl git
 
-# Ensure npm is installed and PATH is updated
-if ! command -v npm &> /dev/null; then
-    echo "npm not found after installation. Attempting to fix..."
-    sudo apt install -y npm
-fi
+# Set up NodeSource repository for Node.js v20 (LTS)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
-# Refresh environment to ensure PATH includes npm
+# Install Node.js (includes npm automatically)
+sudo apt install -y nodejs
+
+# Refresh environment to ensure PATH includes node and npm
 source /etc/profile || true
 
-# Verify node and npm versions
+# Verify installations (fail if not found)
 node -v || { echo "Node.js not found"; exit 1; }
 npm -v || { echo "npm not found"; exit 1; }
 
-# Clone the repository
+# Clone the repository and set up the backend
 git clone https://github.com/WaleedAlsafari/PERN-ToDo-App.git
 cd PERN-ToDo-App/server
 
 # Run npm commands
 npm install
 npm run build
+
+echo "Setup complete!"
