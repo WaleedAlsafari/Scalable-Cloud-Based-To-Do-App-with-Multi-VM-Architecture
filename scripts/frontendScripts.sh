@@ -1,11 +1,97 @@
-sudo apt update && sudo apt upgrade -y
+#!/usr/bin/env bash
+# frontendScripts.sh - Build React app and serve via Nginx (non-blocking for Azure CSE)
+set -euxo pipefail
 
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs git
+APP_DIR="/opt/todo-app"
+REPO_URL="https://github.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture.git"
+CLIENT_DIR="$APP_DIR/app/client"
+BUILD_DIR="/var/www/todo-client"
+SITE_NAME="todo-client"
+NGINX_SITE_PATH="/etc/nginx/sites-available/${SITE_NAME}"
+NGINX_SITE_LINK="/etc/nginx/sites-enabled/${SITE_NAME}"
 
-git clone https://github.com/WaleedAlsafari/Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture.git
-cd Scalable-Cloud-Based-To-Do-App-with-Multi-VM-Architecture/app/client
+retry() {
+  local -r -i max_tries="$1"; shift
+  local -r -i sleep_seconds="$1"; shift
+  local -i try=1
+  until "$@"; do
+    if (( try >= max_tries )); then
+      echo "Command failed after $try attempts: $*" >&2
+      return 1
+    fi
+    echo "Retry $try/$max_tries failed. Sleeping $sleep_seconds..." >&2
+    sleep "$sleep_seconds"
+    ((try++))
+  done
+}
 
+export DEBIAN_FRONTEND=noninteractive
 
-npm install
-npm start
+# تحديث النظام
+retry 5 10 apt-get update -y
+retry 5 10 apt-get upgrade -y
+
+# أدوات أساسية + Node 18 + Nginx
+retry 5 10 apt-get install -y ca-certificates curl gnupg git
+# تخلّص من node/npm القديمة لو موجودة
+apt-get remove -y nodejs npm || true
+retry 5 10 bash -lc 'curl -fsSL https://deb.nodesource.com/setup_18.x | bash -'
+retry 5 10 apt-get install -y nodejs nginx
+
+# كود التطبيق
+mkdir -p "$APP_DIR"
+if [ -d "$APP_DIR/.git" ]; then
+  git -C "$APP_DIR" remote set-url origin "$REPO_URL"
+  retry 5 10 git -C "$APP_DIR" fetch --all --prune
+  git -C "$APP_DIR" reset --hard origin/HEAD
+else
+  retry 5 10 git clone --depth 1 "$REPO_URL" "$APP_DIR"
+fi
+
+# تثبيت واعمل build للـ client
+retry 5 10 bash -lc "cd '$CLIENT_DIR' && npm ci || npm install"
+# إذا تحتاج URL عام: صدّر PUBLIC_URL قبل build (اختياري)
+# export PUBLIC_URL="/"
+retry 5 10 bash -lc "cd '$CLIENT_DIR' && npm run build"
+
+# نسخ الـ build إلى مسار Nginx
+mkdir -p "$BUILD_DIR"
+rsync -a --delete "$CLIENT_DIR/build/" "$BUILD_DIR/"
+
+# تهيئة Nginx لموقع SPA (React)
+cat > "$NGINX_SITE_PATH" <<'EOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+
+    root /var/www/todo-client;
+    index index.html;
+
+    # خدم ملفات الواجهة
+    location / {
+        # لكونه SPA: أي مسار غير موجود يرجع index.html
+        try_files $uri /index.html;
+    }
+
+    # ملفات ثابتة (تحسينات بسيطة)
+    location ~* \.(?:css|js|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico)$ {
+        expires 7d;
+        add_header Cache-Control "public, max-age=604800, immutable";
+        try_files $uri =404;
+    }
+}
+EOF
+
+# تفعيل الموقع وإلغاء الافتراضي القديم إن وجد
+rm -f /etc/nginx/sites-enabled/default || true
+ln -sf "$NGINX_SITE_PATH" "$NGINX_SITE_LINK"
+
+# فحص الصيغة وإعادة التشغيل
+nginx -t
+systemctl enable nginx
+systemctl restart nginx
+
+echo "Frontend deployed to $BUILD_DIR and served by Nginx on port 80."
+exit 0
