@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# frontendScripts.sh - Build React app and serve via Nginx (non-blocking for Azure CSE)
+# frontendScripts.sh - Build React app and serve via Nginx with API proxy
 set -euxo pipefail
 
 APP_DIR="/opt/todo-app"
@@ -33,7 +33,6 @@ retry 5 10 apt-get upgrade -y
 
 # أدوات أساسية + Node 18 + Nginx
 retry 5 10 apt-get install -y ca-certificates curl gnupg git
-# تخلّص من node/npm القديمة لو موجودة
 apt-get remove -y nodejs npm || true
 retry 5 10 bash -lc 'curl -fsSL https://deb.nodesource.com/setup_18.x | bash -'
 retry 5 10 apt-get install -y nodejs nginx
@@ -50,15 +49,13 @@ fi
 
 # تثبيت واعمل build للـ client
 retry 5 10 bash -lc "cd '$CLIENT_DIR' && npm ci || npm install"
-# إذا تحتاج URL عام: صدّر PUBLIC_URL قبل build (اختياري)
-# export PUBLIC_URL="/"
 retry 5 10 bash -lc "cd '$CLIENT_DIR' && npm run build"
 
 # نسخ الـ build إلى مسار Nginx
 mkdir -p "$BUILD_DIR"
 rsync -a --delete "$CLIENT_DIR/build/" "$BUILD_DIR/"
 
-# تهيئة Nginx لموقع SPA (React)
+# تهيئة Nginx لموقع SPA + Proxy API
 cat > "$NGINX_SITE_PATH" <<'EOF'
 server {
     listen 80 default_server;
@@ -69,13 +66,20 @@ server {
     root /var/www/todo-client;
     index index.html;
 
-    # خدم ملفات الواجهة
+    # React SPA
     location / {
-        # لكونه SPA: أي مسار غير موجود يرجع index.html
         try_files $uri /index.html;
     }
 
-    # ملفات ثابتة (تحسينات بسيطة)
+    # API Proxy → غيّر IP/BACKEND_PORT حسب بيئتك
+    location /api/ {
+        proxy_pass http://10.0.2.5:3001/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # ملفات ثابتة
     location ~* \.(?:css|js|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico)$ {
         expires 7d;
         add_header Cache-Control "public, max-age=604800, immutable";
@@ -93,5 +97,5 @@ nginx -t
 systemctl enable nginx
 systemctl restart nginx
 
-echo "Frontend deployed to $BUILD_DIR and served by Nginx on port 80."
+echo "Frontend deployed to $BUILD_DIR and served by Nginx on port 80 with /api/ proxy to backend."
 exit 0
